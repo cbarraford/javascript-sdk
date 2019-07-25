@@ -355,7 +355,6 @@ class LedgerApp {
   }
 
   async _signSendChunk(chunkIdx, chunksCount, chunk) {
-    console.log("Got here mofo")
     const result = {}
     try {
       let apduResponse = await this._transport.send(
