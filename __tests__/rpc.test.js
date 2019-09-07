@@ -64,14 +64,14 @@ it("wss getTokenInfo", async () => {
 
 it("rest listAllTokens", async () => {
   const client = getClient("https")
-  const res = await client.listAllTokens(1, 2)
+  const res = await client.listAllTokens(0, 15)
   expect(res).toBeTruthy()
-  expect(res.length).toBe(2)
+  expect(res.length).toBe(15)
 })
 
 it("wss listAllTokens", async () => {
   const client = getClient("https")
-  const res = await client.listAllTokens(1, 2)
+  const res = await client.listAllTokens(2, 2)
   expect(res).toBeTruthy()
   expect(res.length).toBe(2)
   client.close()
@@ -101,6 +101,17 @@ it("wss txSearch", async () => {
 
   const result = await client.txSearch(params)
   expect(result.txs).toBeTruthy()
+  client.close()
+})
+
+it("https txHash", async () => {
+  const client = getClient("https")
+  const params = {
+    hash: Buffer.from("41EB40A5E21D4946BECD922426EDE4789A07384D446A90C499F93344B3B2659B", "hex"),
+    prove: true
+  }
+  const result = await client.tx(params)
+  expect(result.tx_result).toBeTruthy()
   client.close()
 })
 
@@ -149,7 +160,7 @@ it("wss getOpenOrders", async () => {
 
 it("rest getTradingPairs", async () => {
   const client = getClient("https")
-  const result = await client.getTradingPairs(1, 2)
+  const result = await client.getTradingPairs(0, 2)
   expect(result).toBeTruthy()
   expect(result.length).toBe(2)
 })

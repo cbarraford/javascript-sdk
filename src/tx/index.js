@@ -2,7 +2,7 @@ import * as crypto from "../crypto/"
 import * as encoder from "../encoder/"
 import { UVarInt } from "../encoder/varint"
 
-export const txType = {
+export const TxTypes = {
   MsgSend: "MsgSend",
   NewOrderMsg: "NewOrderMsg",
   CancelOrderMsg: "CancelOrderMsg",
@@ -20,7 +20,7 @@ export const txType = {
   MsgVote: "MsgVote"
 }
 
-export const typePrefix = {
+export const TypePrefixes = {
   MsgSend: "2A2C87FA",
   NewOrderMsg: "CE6DC043",
   CancelOrderMsg: "166E681B",
@@ -48,6 +48,7 @@ export const typePrefix = {
  *   msg: {},
  *   type: 'NewOrderMsg',
  *   sequence: 29,
+ *   source: 0
  * };
  * var tx = new Transaction(rawTx);
  * @property {Buffer} raw The raw vstruct encoded transaction
@@ -57,10 +58,11 @@ export const typePrefix = {
  * @param {String} type transaction type
  * @param {Object} data.msg object data of tx type
  * @param {Number} data.sequence transaction counts
+ * @param {Number} data.source where does this transaction come from
  */
 class Transaction {
   constructor(data) {
-    if (!txType[data.type]) {
+    if (!TxTypes[data.type]) {
       throw new TypeError(`does not support transaction type: ${data.type}`)
     }
 
@@ -76,6 +78,7 @@ class Transaction {
     this.chain_id = data.chain_id
     this.msgs = data.msg ? [data.msg] : []
     this.memo = data.memo
+    this.source = data.source || 0 // default value is 0
   }
 
   /**
@@ -94,7 +97,7 @@ class Transaction {
       "memo": this.memo,
       "msgs": [msg],
       "sequence": this.sequence.toString(),
-      "source": "1"
+      "source": this.source.toString()
     }
 
     return encoder.convertObjectToSignBytes(signMsg)
@@ -124,6 +127,14 @@ class Transaction {
    * @return {Transaction}
    **/
   sign(privateKey, msg) {
+    if(!privateKey){
+      throw new Error("private key should not be null")
+    }
+
+    if(!msg){
+      throw new Error("signing message should not be null")
+    }
+
     const signBytes = this.getSignBytes(msg)
     const privKeyBuf = Buffer.from(privateKey, "hex")
     const signature = crypto.generateSignature(signBytes.toString("hex"), privKeyBuf)
@@ -146,9 +157,9 @@ class Transaction {
       msg: [msg],
       signatures: this.signatures,
       memo: this.memo,
-      source: 1, // web wallet value is 1
+      source: this.source, // sdk value is 0, web wallet value is 1
       data: "",
-      msgType: txType.StdTx
+      msgType: TxTypes.StdTx
     }
 
     const bytes = encoder.marshalBinary(stdTx)
@@ -177,7 +188,11 @@ class Transaction {
   }
 }
 
-Transaction.txType = txType
-Transaction.typePrefix = typePrefix
+Transaction.TxTypes = TxTypes
+Transaction.TypePrefixes = TypePrefixes
+
+// DEPRECATED: Retained for backward compatibility
+Transaction.txType = TxTypes
+Transaction.typePrefix = TypePrefixes
 
 export default Transaction
